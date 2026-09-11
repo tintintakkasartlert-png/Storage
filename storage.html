@@ -1,0 +1,873 @@
+<title>Storage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  /* ── tokens ── */
+  :root {
+    --bg:        #0D0E14;
+    --surface:   #161820;
+    --elevated:  #1E2130;
+    --border:    #272A3A;
+    --accent:    #5B6EF7;
+    --accent-hi: #7B8BFF;
+    --cyan:      #2DD4BF;
+    --text:      #E4E6F0;
+    --sub:       #9297B0;
+    --muted:     #555A72;
+    --danger:    #F06060;
+    --success:   #3DDC84;
+    --radius:    10px;
+    --font-ui:   'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:       #F0F2FA;
+      --surface:  #FFFFFF;
+      --elevated: #E8EBF5;
+      --border:   #D4D8EC;
+      --text:     #1A1C2E;
+      --sub:      #555A72;
+      --muted:    #9297B0;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:       #F0F2FA;
+    --surface:  #FFFFFF;
+    --elevated: #E8EBF5;
+    --border:   #D4D8EC;
+    --text:     #1A1C2E;
+    --sub:      #555A72;
+    --muted:    #9297B0;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── top header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .logo-mark {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark svg { width: 16px; height: 16px; }
+
+  .search-wrap {
+    flex: 1;
+    max-width: 420px;
+    position: relative;
+  }
+  .search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); width: 16px; height: 16px; pointer-events: none;
+  }
+  #search {
+    width: 100%;
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px 8px 36px;
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  #search::placeholder { color: var(--muted); }
+  #search:focus { border-color: var(--accent); }
+
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+  .storage-pill {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--sub);
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+  .storage-pill span { color: var(--accent-hi); }
+
+  .btn-upload {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: var(--font-ui);
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    transition: background .15s, opacity .15s;
+    flex-shrink: 0;
+  }
+  .btn-upload:hover { background: var(--accent-hi); }
+  .btn-upload svg { width: 15px; height: 15px; }
+
+  /* ── layout ── */
+  .shell {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── sidebar ── */
+  aside {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+  }
+  .aside-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 4px 8px 8px;
+  }
+  .filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--sub);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    transition: background .12s, color .12s;
+    font-family: var(--font-ui);
+  }
+  .filter-btn:hover { background: var(--elevated); color: var(--text); }
+  .filter-btn.active { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent-hi); }
+  .filter-btn .icon { width: 16px; height: 16px; flex-shrink: 0; }
+  .filter-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--elevated);
+    border-radius: 10px;
+    padding: 1px 7px;
+  }
+
+  /* ── main area ── */
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── drop zone ── */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-align: center;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+  }
+  .drop-zone svg { color: var(--muted); width: 32px; height: 32px; }
+  .drop-zone p { font-size: 13.5px; color: var(--sub); }
+  .drop-zone p strong { color: var(--accent-hi); }
+  .drop-zone .sub-text { font-size: 11.5px; color: var(--muted); }
+
+  /* ── grid ── */
+  #grid-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  #file-count { font-family: var(--font-mono); color: var(--sub); font-size: 11.5px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .file-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .15s, transform .12s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .file-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .file-card:hover .card-actions { opacity: 1; }
+
+  .card-thumb {
+    aspect-ratio: 16 / 10;
+    background: var(--elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .card-thumb img,
+  .card-thumb video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .card-thumb .type-icon {
+    width: 36px; height: 36px;
+    color: var(--muted);
+  }
+
+  .card-actions {
+    position: absolute;
+    top: 6px; right: 6px;
+    display: flex; gap: 4px;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .card-action {
+    width: 28px; height: 28px;
+    background: rgba(13,14,20,.75);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background .12s;
+    color: #fff;
+  }
+  .card-action:hover { background: rgba(13,14,20,.95); }
+  .card-action.del:hover { background: var(--danger); }
+  .card-action svg { width: 13px; height: 13px; }
+
+  .card-info {
+    padding: 10px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+  .card-name {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-meta {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    display: flex;
+    gap: 6px;
+  }
+  .card-type-badge {
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .badge-img  { background: color-mix(in srgb, #2DD4BF 15%, transparent); color: #2DD4BF; }
+  .badge-vid  { background: color-mix(in srgb, #F87171 15%, transparent); color: #F87171; }
+  .badge-doc  { background: color-mix(in srgb, #60A5FA 15%, transparent); color: #60A5FA; }
+  .badge-misc { background: color-mix(in srgb, #A78BFA 15%, transparent); color: #A78BFA; }
+
+  /* ── empty state ── */
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+    font-size: 13.5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .empty svg { width: 40px; height: 40px; color: var(--border); }
+
+  /* ── lightbox ── */
+  .lightbox {
+    display: none;
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(5,6,10,.9);
+    backdrop-filter: blur(8px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox-inner {
+    position: relative;
+    max-width: min(90vw, 960px);
+    max-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox-inner img,
+  .lightbox-inner video {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 10px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6);
+  }
+  .lightbox-close {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text);
+  }
+  .lightbox-meta {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--sub);
+    font-family: var(--font-mono);
+  }
+
+  /* ── hidden input ── */
+  #file-input { display: none; }
+
+  /* ── toast ── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0;
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── responsive ── */
+  @media (max-width: 640px) {
+    aside { display: none; }
+    .storage-pill { display: none; }
+    main { padding: 16px; }
+    header { padding: 0 16px; }
+  }
+</style>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="5" height="5" rx="1.2" fill="white"/>
+        <rect x="9" y="2" width="5" height="5" rx="1.2" fill="white" opacity=".6"/>
+        <rect x="2" y="9" width="5" height="5" rx="1.2" fill="white" opacity=".6"/>
+        <rect x="9" y="9" width="5" height="5" rx="1.2" fill="white" opacity=".35"/>
+      </svg>
+    </div>
+    storage
+  </div>
+
+  <div class="search-wrap">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5 14 14" stroke-linecap="round"/>
+    </svg>
+    <input id="search" type="text" placeholder="Search files…" autocomplete="off">
+  </div>
+
+  <div class="header-right">
+    <div class="storage-pill" id="storage-display">Used: <span id="storage-used">0 B</span></div>
+    <button class="btn-upload" id="upload-btn">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 11V3M4 6l4-4 4 4"/><path d="M2 13h12"/>
+      </svg>
+      Upload
+    </button>
+  </div>
+</header>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="aside-label">Library</div>
+    <button class="filter-btn active" data-filter="all">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/>
+        <rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/>
+      </svg>
+      All Files
+      <span class="filter-count" id="count-all">0</span>
+    </button>
+    <button class="filter-btn" data-filter="image">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="1" y="3" width="14" height="10" rx="1.5"/>
+        <circle cx="5.5" cy="7" r="1.5"/>
+        <path d="M1 12l4-4 3 3 2-2 5 5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Images
+      <span class="filter-count" id="count-image">0</span>
+    </button>
+    <button class="filter-btn" data-filter="video">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="1" y="3" width="10" height="10" rx="1.5"/>
+        <path d="M11 6l4-2v8l-4-2V6z" stroke-linejoin="round"/>
+      </svg>
+      Videos
+      <span class="filter-count" id="count-video">0</span>
+    </button>
+    <button class="filter-btn" data-filter="document">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M9 1H3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V5L9 1z" stroke-linejoin="round"/>
+        <path d="M9 1v4h4M5 9h6M5 12h4" stroke-linecap="round"/>
+      </svg>
+      Documents
+      <span class="filter-count" id="count-document">0</span>
+    </button>
+    <button class="filter-btn" data-filter="other">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="8" cy="8" r="7"/>
+        <path d="M8 5v3l2 2" stroke-linecap="round"/>
+      </svg>
+      Other
+      <span class="filter-count" id="count-other">0</span>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <!-- DROP ZONE -->
+    <div class="drop-zone" id="drop-zone">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21V11M10 16l6-6 6 6"/>
+        <path d="M4 24c0 2.2 1.8 4 4 4h16c2.2 0 4-1.8 4-4"/>
+        <rect x="4" y="4" width="24" height="24" rx="4" stroke-dasharray="4 3"/>
+      </svg>
+      <p><strong>Drop files here</strong> to add them to your storage</p>
+      <p class="sub-text">Images, videos, documents — anything goes</p>
+    </div>
+
+    <!-- FILE GRID -->
+    <div id="grid-label">
+      <span>Files</span>
+      <span id="file-count" style="font-family:var(--font-mono);color:var(--sub);font-size:11.5px">0 items</span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </main>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-close" id="lb-close">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M1 1l12 12M13 1L1 13"/>
+    </svg>
+  </div>
+  <div class="lightbox-inner" id="lb-inner"></div>
+  <div class="lightbox-meta" id="lb-meta"></div>
+</div>
+
+<input type="file" id="file-input" multiple>
+<div id="toast"></div>
+
+<script>
+(function() {
+  const DB_NAME = 'storage-db', STORE = 'files', DB_VER = 1;
+  let db, allFiles = [], activeFilter = 'all', searchQuery = '';
+
+  /* ── IndexedDB ── */
+  function openDB() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = e => e.target.result.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+      req.onsuccess = e => { db = e.target.result; res(db); };
+      req.onerror = () => rej(req.error);
+    });
+  }
+  function dbAll() {
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  }
+  function dbAdd(obj) {
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const req = tx.objectStore(STORE).add(obj);
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  }
+  function dbDelete(id) {
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const req = tx.objectStore(STORE).delete(id);
+      req.onsuccess = () => res();
+      req.onerror = () => rej(req.error);
+    });
+  }
+
+  /* ── helpers ── */
+  function fileCategory(mime) {
+    if (mime.startsWith('image/')) return 'image';
+    if (mime.startsWith('video/')) return 'video';
+    if (mime.match(/pdf|word|excel|powerpoint|text\//)) return 'document';
+    return 'other';
+  }
+  function badgeClass(cat) {
+    return { image:'badge-img', video:'badge-vid', document:'badge-doc', other:'badge-misc' }[cat] || 'badge-misc';
+  }
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    if (bytes < 1024*1024*1024) return (bytes/(1024*1024)).toFixed(1) + ' MB';
+    return (bytes/(1024*1024*1024)).toFixed(2) + ' GB';
+  }
+  function fmtDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  /* ── icons ── */
+  const ICON_DOC = `<svg class="type-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H9a2 2 0 00-2 2v26a2 2 0 002 2h18a2 2 0 002-2V11L22 3z"/><path d="M22 3v8h8M12 19h12M12 24h8"/></svg>`;
+  const ICON_OTHER = `<svg class="type-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="18" cy="18" r="15"/><path d="M18 10v8l5 5" stroke-linecap="round"/></svg>`;
+
+  /* ── storage display ── */
+  function updateStorage() {
+    const total = allFiles.reduce((a, f) => a + (f.size || 0), 0);
+    document.getElementById('storage-used').textContent = fmtSize(total);
+  }
+
+  /* ── counts ── */
+  function updateCounts() {
+    const cats = { image:0, video:0, document:0, other:0 };
+    allFiles.forEach(f => { cats[f.category] = (cats[f.category]||0)+1; });
+    document.getElementById('count-all').textContent = allFiles.length;
+    document.getElementById('count-image').textContent = cats.image;
+    document.getElementById('count-video').textContent = cats.video;
+    document.getElementById('count-document').textContent = cats.document;
+    document.getElementById('count-other').textContent = cats.other;
+  }
+
+  /* ── render ── */
+  function getVisible() {
+    let files = allFiles;
+    if (activeFilter !== 'all') files = files.filter(f => f.category === activeFilter);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      files = files.filter(f => f.name.toLowerCase().includes(q));
+    }
+    return files;
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('grid');
+    const visible = getVisible();
+    document.getElementById('file-count').textContent = visible.length + ' item' + (visible.length !== 1 ? 's' : '');
+
+    if (visible.length === 0) {
+      grid.innerHTML = `<div class="empty">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="4" y="4" width="32" height="32" rx="4" stroke-dasharray="4 3"/>
+          <path d="M20 13v14M13 20h14" stroke-linecap="round"/>
+        </svg>
+        <span>${searchQuery || activeFilter !== 'all' ? 'No files match your search' : 'Drop files or click Upload to get started'}</span>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = '';
+    visible.forEach(file => {
+      const card = document.createElement('div');
+      card.className = 'file-card';
+      card.dataset.id = file.id;
+
+      let thumbHTML = '';
+      if (file.category === 'image') {
+        thumbHTML = `<img src="${file.dataUrl}" loading="lazy" alt="${file.name}">`;
+      } else if (file.category === 'video') {
+        thumbHTML = `<video src="${file.dataUrl}" preload="metadata" muted></video>`;
+      } else if (file.category === 'document') {
+        thumbHTML = ICON_DOC;
+      } else {
+        thumbHTML = ICON_OTHER;
+      }
+
+      card.innerHTML = `
+        <div class="card-thumb">
+          ${thumbHTML}
+          <div class="card-actions">
+            <div class="card-action dl" title="Download" data-id="${file.id}">
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 2v7M3 7l4 4 4-4"/><path d="M1 12h12"/>
+              </svg>
+            </div>
+            <div class="card-action del" title="Delete" data-id="${file.id}">
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 4h10M5 4V2h4v2M6 7v4M8 7v4"/><path d="M3 4l1 8h6l1-8"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card-info">
+          <div style="display:flex;align-items:center;gap:5px;justify-content:space-between">
+            <span class="card-name" title="${file.name}">${file.name}</span>
+            <span class="card-type-badge ${badgeClass(file.category)}">${file.category === 'document' ? 'doc' : file.category}</span>
+          </div>
+          <div class="card-meta">
+            <span>${fmtSize(file.size)}</span>
+            <span>·</span>
+            <span>${fmtDate(file.addedAt)}</span>
+          </div>
+        </div>`;
+
+      // open lightbox
+      card.querySelector('.card-thumb').addEventListener('click', e => {
+        if (!e.target.closest('.card-actions')) openLightbox(file);
+      });
+
+      // download
+      card.querySelector('.dl').addEventListener('click', e => {
+        e.stopPropagation();
+        downloadFile(file);
+      });
+
+      // delete
+      card.querySelector('.del').addEventListener('click', e => {
+        e.stopPropagation();
+        deleteFile(file.id);
+      });
+
+      grid.appendChild(card);
+    });
+  }
+
+  /* ── upload ── */
+  async function handleFiles(fileList) {
+    const arr = Array.from(fileList);
+    let added = 0;
+    for (const f of arr) {
+      try {
+        const dataUrl = await readAsDataURL(f);
+        const obj = {
+          name: f.name,
+          size: f.size,
+          mime: f.type,
+          category: fileCategory(f.type),
+          dataUrl,
+          addedAt: Date.now()
+        };
+        const id = await dbAdd(obj);
+        obj.id = id;
+        allFiles.push(obj);
+        added++;
+      } catch(e) { console.error(e); }
+    }
+    updateCounts();
+    updateStorage();
+    renderGrid();
+    if (added > 0) toast(`Added ${added} file${added > 1 ? 's' : ''}`);
+  }
+
+  function readAsDataURL(file) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+  }
+
+  /* ── delete ── */
+  async function deleteFile(id) {
+    await dbDelete(id);
+    allFiles = allFiles.filter(f => f.id !== id);
+    updateCounts();
+    updateStorage();
+    renderGrid();
+    toast('File deleted');
+  }
+
+  /* ── download ── */
+  function downloadFile(file) {
+    const a = document.createElement('a');
+    a.href = file.dataUrl;
+    a.download = file.name;
+    a.click();
+  }
+
+  /* ── lightbox ── */
+  function openLightbox(file) {
+    const lb = document.getElementById('lightbox');
+    const inner = document.getElementById('lb-inner');
+    const meta = document.getElementById('lb-meta');
+    inner.innerHTML = '';
+    if (file.category === 'image') {
+      const img = document.createElement('img');
+      img.src = file.dataUrl;
+      img.alt = file.name;
+      inner.appendChild(img);
+    } else if (file.category === 'video') {
+      const vid = document.createElement('video');
+      vid.src = file.dataUrl;
+      vid.controls = true;
+      vid.autoplay = true;
+      inner.appendChild(vid);
+    } else {
+      inner.innerHTML = `<div style="padding:48px;text-align:center;color:var(--sub)">
+        <svg width="48" height="48" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M22 3H9a2 2 0 00-2 2v26a2 2 0 002 2h18a2 2 0 002-2V11L22 3z"/><path d="M22 3v8h8M12 19h12M12 24h8"/></svg>
+        <p style="margin-top:16px;font-size:14px">${file.name}</p>
+        <button onclick="downloadFile_global(${file.id})" style="margin-top:12px;background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px">Download file</button>
+      </div>`;
+    }
+    meta.textContent = `${file.name}  ·  ${fmtSize(file.size)}`;
+    lb.classList.add('open');
+  }
+
+  function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    lb.classList.remove('open');
+    const inner = document.getElementById('lb-inner');
+    const vid = inner.querySelector('video');
+    if (vid) vid.pause();
+    inner.innerHTML = '';
+  }
+
+  window.downloadFile_global = function(id) {
+    const file = allFiles.find(f => f.id === id);
+    if (file) downloadFile(file);
+  };
+
+  /* ── toast ── */
+  let toastTimer;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  /* ── events ── */
+  document.getElementById('upload-btn').addEventListener('click', () => document.getElementById('file-input').click());
+  document.getElementById('file-input').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
+
+  const dropZone = document.getElementById('drop-zone');
+  dropZone.addEventListener('click', () => document.getElementById('file-input').click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  document.body.addEventListener('dragover', e => e.preventDefault());
+  document.body.addEventListener('drop', e => { e.preventDefault(); handleFiles(e.dataTransfer.files); });
+
+  document.getElementById('search').addEventListener('input', e => {
+    searchQuery = e.target.value.trim();
+    renderGrid();
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderGrid();
+    });
+  });
+
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+  document.getElementById('lightbox').addEventListener('click', e => { if (e.target === e.currentTarget) closeLightbox(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  /* ── init ── */
+  openDB().then(async () => {
+    allFiles = await dbAll();
+    updateCounts();
+    updateStorage();
+    renderGrid();
+  }).catch(e => {
+    console.error('DB error:', e);
+    toast('Storage error — files may not persist');
+    renderGrid();
+  });
+})();
+</script>
